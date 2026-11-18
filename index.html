@@ -1,0 +1,109 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LV Grid — Cloud SCADA Dashboard V7</title><style>
+:root{--bg:#071320;--panel:#102235;--sub:#162c42;--line:#294157;--text:#e5f1fa;--muted:#98b0c3;--a:#44bcef;--b:#f5b24b;--c:#88d48b;--good:#49d0a8;--bad:#ff7777}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.48 system-ui,'Segoe UI',Arial,sans-serif}header{padding:24px max(20px,calc((100vw - 1500px)/2));border-bottom:1px solid var(--line);background:#0b1c2d;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}h1{font-size:23px;margin:0}h2{font-size:17px;margin:0 0 15px}small,.muted{color:var(--muted)}main{max-width:1500px;margin:auto;padding:20px}select{background:var(--sub);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;max-width:210px}nav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}button,.linkbtn{background:var(--sub);color:var(--text);border:1px solid var(--line);padding:10px 15px;border-radius:9px;cursor:pointer;text-decoration:none}button:hover,.linkbtn:hover{border-color:var(--a)}.active{background:#164264;border-color:var(--a)}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.grow{flex:1}.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px}.card .v{font-size:26px;font-weight:750;margin-top:6px}.card .k{font-size:12px;color:var(--muted)}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:16px 0}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:16px 0}.panel{overflow:auto}.chart{width:100%;height:255px;display:block}.smallchart{height:205px}table{border-collapse:collapse;width:100%;min-width:620px}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}th{color:#b3c8da;position:sticky;top:0;background:var(--panel)}tr:hover td{background:#183149}td code{color:#8ce5de}section[data-tab]{display:none}section[data-tab].show{display:block}.pill{display:inline-block;border:1px solid var(--line);padding:4px 10px;border-radius:20px;color:var(--muted)}.ok{color:var(--good)}.warn{color:var(--b)}.error{color:var(--bad)}.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px}.dot{width:9px;height:9px;display:inline-block;border-radius:50%;margin-right:5px}.map{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.lane{border-radius:9px;padding:15px;background:var(--sub);border-top:4px solid var(--a)}.lane.b{border-color:var(--b)}.lane.c{border-color:var(--c)}.houses{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.house{background:#234057;border-radius:6px;padding:8px 10px;font-weight:700}footer{color:var(--muted);padding:16px 20px;text-align:center;border-top:1px solid var(--line)}@media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:750px){.grid,.two,.three{grid-template-columns:1fr}.map{grid-template-columns:1fr}header h1{font-size:19px}}
+</style></head><body>
+<header><div><h1>⚡ LV GRID | CLOUD SCADA</h1><small>12-house low-voltage distribution · Simscape Electrical · ThingSpeak</small></div><div class="row"><span id="state" class="pill">Loading channels...</span><button id="refresh">↻ Refresh now</button></div></header>
+<main><div class="row"><span class="pill">Public, read-only monitoring</span><span class="muted" id="stamp">Last refresh: —</span><label class="muted" for="runselect">Run:</label><select id="runselect" aria-label="Choose simulation run"><option value="">Latest available</option></select><span class="muted" id="run">Run: —</span><div class="grow"></div><a class="linkbtn" href="https://thingspeak.com/channels/3586353" target="_blank" rel="noopener">ThingSpeak CH1</a></div>
+<div class="grid" style="margin-top:17px"><div class="card"><div class="k">HOUSES / PHASES</div><div class="v">12 / 3</div></div><div class="card"><div class="k">PHASE MAP VERSION</div><div class="v" id="kmap">—</div></div><div class="card"><div class="k">LAST CHANGE HOUSE</div><div class="v" id="khouse">—</div></div><div class="card"><div class="k">PHASE A POWER</div><div class="v" id="kpa">—</div></div><div class="card"><div class="k">WINDOWS / NILM EVENTS</div><div class="v" id="kcount">—</div></div><div class="card"><div class="k">NILM MEAN RESIDUAL</div><div class="v" id="kres">—</div></div></div>
+<nav id="tabs"><button class="active" data-show="overview">Overview</button><button data-show="measure">Electrical measurements</button><button data-show="map">Digital phase map</button><button data-show="nilm">NILM events</button><button data-show="info">System & sharing</button></nav>
+<section data-tab="overview" class="show"><div class="two"><div class="panel"><h2>Active power · 3 phases (kW)</h2><svg class="chart" id="power" viewBox="0 0 580 255" role="img" aria-label="Phase power"></svg><div class="legend"><span><i class="dot" style="background:var(--a)"></i>Phase A</span><span><i class="dot" style="background:var(--b)"></i>Phase B</span><span><i class="dot" style="background:var(--c)"></i>Phase C</span></div></div><div class="panel"><h2>Phase voltage · RMS (V)</h2><svg class="chart" id="voltage" viewBox="0 0 580 255" role="img" aria-label="Phase voltage"></svg><div class="legend"><span><i class="dot" style="background:var(--a)"></i>Va</span><span><i class="dot" style="background:var(--b)"></i>Vb</span><span><i class="dot" style="background:var(--c)"></i>Vc</span></div></div></div><div class="two"><div class="panel"><h2>Phase currents · RMS (A)</h2><svg class="chart smallchart" id="current" viewBox="0 0 580 255" role="img" aria-label="Phase current"></svg></div><div class="panel"><h2>Recent changes and events</h2><div id="recent" class="muted">Waiting for measurements...</div></div></div></section>
+<section data-tab="measure"><div class="panel"><h2>All electrical measurement windows</h2><small>Power/voltage from CH1 and current/time windows from CH2, aligned by identical Run ID and Window ID (W01–W12). Repeated uploads are deduplicated by latest entry ID.</small><p id="coverage" class="muted">Waiting for aligned window records...</p><div style="margin-top:14px;overflow:auto" id="measuretable"></div></div></section>
+<section data-tab="map"><div class="two"><div class="panel"><h2>Initial digital map · before transfers</h2><div class="map" id="mapbefore"></div></div><div class="panel"><h2>Published digital map · after transfers</h2><div class="map" id="mapafter"></div><small id="mapnote">Map reconstructed from the published phase-map version for this fixed test topology; the published signal is a version number, not individual house-phase telemetry.</small></div></div><div class="panel"><h2>House phase transfer sequence</h2><div id="transfers"></div><small>Transfers: H5 B→A, H9 C→B, H3 A→C. This is the known test configuration. Remote switching is not enabled.</small></div></section>
+<section data-tab="nilm"><div class="panel"><h2>NILM appliance event log · H1</h2><small>CH3 carries the measured/predicted power steps and residual-based heuristic score. Events are evaluated at preset test windows; this dashboard does not claim blind real-time NILM.</small><div style="margin-top:14px" id="nilmtable"></div></div></section>
+<section data-tab="info"><div class="three"><div class="panel"><h2>Power &amp; voltage</h2><p>Channel <b>3586353</b></p><a class="linkbtn" href="https://thingspeak.com/channels/3586353" target="_blank" rel="noopener">Open public channel</a></div><div class="panel"><h2>Currents &amp; windows</h2><p>Channel <b>3586375</b></p><a class="linkbtn" href="https://thingspeak.com/channels/3586375" target="_blank" rel="noopener">Open public channel</a></div><div class="panel"><h2>NILM events</h2><p>Channel <b>3586381</b></p><a class="linkbtn" href="https://thingspeak.com/channels/3586381" target="_blank" rel="noopener">Open public channel</a></div></div><div class="panel"><h2>How this SCADA-style dashboard works</h2><p>MATLAB simulates the physical LV grid, then uploads saved stable-window measurements to three ThingSpeak channels. This page reads only public channel feeds, selects an individual run and pairs records by window/event ID, automatically refreshes every 30 seconds, and can be hosted as a static website (e.g. GitHub Pages). It is <b>cloud playback, not live solver streaming</b>; it contains <b>no actuator controls</b> and <b>no Write API keys</b>.</p><p id="errors" class="muted">API status: waiting...</p><div id="channelstatus" style="margin-top:14px"></div><p class="muted">If the page is opened as a local file and the browser blocks cross-site requests, publish this HTML on a secure website. The dashboard also attempts the ThingSpeak JSONP callback when ordinary fetch is blocked.</p></div></section>
+</main><footer>LV GRID Cloud SCADA V7 · Public monitoring only · MATLAB / Simscape Electrical / ThingSpeak</footer>
+<script>
+'use strict';
+const IDs=[3586353,3586375,3586381],API='https://api.thingspeak.com/channels/';
+const COLORS=['#44bcef','#f5b24b','#88d48b'];
+const $=id=>document.getElementById(id);const num=x=>x===null||x===undefined||x===''?NaN:Number(x);const fmt=(x,d=2)=>Number.isFinite(num(x))?num(x).toFixed(d):'—';
+function runid(s){const m=String(s||'').match(/LVGRID\s+(\d{8}_\d{6})/);return m?m[1]:null}
+function recordNumber(status,letter){const m=String(status||'').match(new RegExp('\\b'+letter+'(\\d{1,3})\\b'));return m?Number(m[1]):null}
+function sortedUniqueRows(rows,kind){const best=new Map();for(const f of rows){const n=recordNumber(f.status,kind);if(n===null)continue;const previous=best.get(n);if(!previous||Number(f.entry_id)>Number(previous.entry_id))best.set(n,f)}return [...best.entries()].sort((a,b)=>a[0]-b[0]).map(([key,feed])=>({...feed,_window:key}))}
+function getRunEntries(payload,run){return (payload?.feeds||[]).filter(f=>runid(f.status)===run)}
+function runsIn(payload){return [...new Set((payload?.feeds||[]).map(f=>runid(f.status)).filter(Boolean))]}
+function makeTable(head,rows){const tr=rows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('');return '<div style="overflow:auto"><table><thead><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+(tr||'<tr><td colspan="12">No data for this run yet</td></tr>')+'</tbody></table></div>'}
+function esc(x){return String(x??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function graph(id,rows,keys,xkey){const el=$(id);if(!el)return;const clean=rows.filter(r=>keys.some(k=>Number.isFinite(num(r[k]))));if(clean.length===0){el.innerHTML='<text x="18" y="125" fill="#98b0c3">Waiting for readings...</text>';return}const vals=clean.flatMap(r=>keys.map(k=>num(r[k]))).filter(Number.isFinite);let ymin=Math.min(...vals),ymax=Math.max(...vals);const pad=Math.max((ymax-ymin)*.13,Math.abs(ymax)*.008,.1);ymin-=pad;ymax+=pad;const L=55,R=565,T=16,B=219, xx=i=>L+i*(R-L)/Math.max(clean.length-1,1),yy=v=>B-(v-ymin)/(ymax-ymin)*(B-T);let html='';for(let g=0;g<=4;g++){let val=ymin+(ymax-ymin)*g/4,y=yy(val);html+=`<line x1="${L}" y1="${y}" x2="${R}" y2="${y}" stroke="#294157" stroke-width="1"/><text x="${L-7}" y="${y+4}" text-anchor="end" fill="#98b0c3" font-size="11">${val.toFixed(1)}</text>`}keys.forEach((k,z)=>{const pts=clean.map((r,i)=>Number.isFinite(num(r[k]))?`${xx(i)},${yy(num(r[k]))}`:null).filter(Boolean).join(' ');html+=`<polyline points="${pts}" fill="none" stroke="${COLORS[z]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;if(clean.length<3)clean.forEach((r,i)=>{if(Number.isFinite(num(r[k])))html+=`<circle cx="${xx(i)}" cy="${yy(num(r[k]))}" r="4" fill="${COLORS[z]}"/>`})});const n=clean.length;for(let i=0;i<n;i+=Math.max(1,Math.ceil(n/6))){const label=clean[i][xkey]??i+1;html+=`<text x="${xx(i)}" y="240" text-anchor="middle" fill="#98b0c3" font-size="11">${esc(label)}</text>`}el.innerHTML=html}
+const initial=[1,1,1,1,2,2,2,2,3,3,3,3];function currMap(version){let a=initial.slice();if(version>=1)a[4]=1;if(version>=2)a[8]=2;if(version>=3)a[2]=3;return a}
+function mapHTML(version){const v=currMap(version);return [1,2,3].map((p,i)=>'<div class="lane '+['','b','c'][i]+'"><b>PHASE '+['A','B','C'][i]+'</b><div class="houses">'+v.map((m,h)=>m===p?'<span class="house">H'+(h+1)+'</span>':'').join('')+'</div></div>').join('')}
+function fillMap(rows){const latest=rows.at(-1);const version=Math.max(0,Math.min(3,Math.round(num(latest?.field8)||0)));$('mapbefore').innerHTML=mapHTML(0);$('mapafter').innerHTML=mapHTML(version);$('kmap').textContent=version;$('mapnote').textContent='Displayed version '+version+'. Initial=0; H5 move=1; H9 move=2; H3 move=3. Fixed reference test topology.';$('transfers').innerHTML=makeTable(['Step','House','From','To','Published'],[[1,'H5','B','A',version>=1?'Yes':'Pending'],[2,'H9','C','B',version>=2?'Yes':'Pending'],[3,'H3','A','C',version>=3?'Yes':'Pending']])}
+function applianceName(mask){const names=['Lighting','Refrigerator','Fan','WashingMachine','AirConditioner'];return names.filter((_,i)=>(mask&(1<<i))!==0).join(' + ')||'Unknown'}
+function jsonpRead(id){
+ return new Promise((resolve,reject)=>{
+  const cb='lvgridTsCb_'+id+'_'+Date.now();
+  const script=document.createElement('script');
+  let done=false;
+  const timer=setTimeout(()=>finish(new Error('JSONP timeout (15 s)')),15000);
+  function finish(err,value){if(done)return;done=true;clearTimeout(timer);delete window[cb];script.remove();if(err)reject(err);else resolve(value)}
+  window[cb]=payload=>finish(null,payload);
+  script.onerror=()=>finish(new Error('JSONP script blocked or unsupported'));
+  script.src=API+id+'/feeds.json?results=100&status=true&callback='+encodeURIComponent(cb)+'&_='+Date.now();
+  document.head.appendChild(script);
+ });
+}
+async function loadChannel(id){
+ try{
+  const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+  const timer=ctrl?setTimeout(()=>ctrl.abort(),9000):null;
+  try{
+   const res=await fetch(API+id+'/feeds.json?results=100&status=true&_='+Date.now(),{cache:'no-store',signal:ctrl?.signal});
+   if(!res.ok)throw new Error('HTTP '+res.status);
+   const json=await res.json();
+   if(!json||!Array.isArray(json.feeds))throw new Error('Invalid channel data');
+   return {id,ok:true,payload:json,method:'Fetch'};
+  } finally {if(timer)clearTimeout(timer)}
+ }catch(fetchError){
+  try{
+   const json=await jsonpRead(id);
+   if(!json||!Array.isArray(json.feeds))throw new Error('Invalid JSONP feed');
+   return {id,ok:true,payload:json,method:'JSONP'};
+  }catch(jsonpError){return {id,ok:false,error:'Fetch: '+fetchError.message+'; JSONP: '+jsonpError.message}}
+ }
+}
+let refreshing=false,chosenRun='';
+function presentChannelDiagnostic(x){const count=x.ok?x.payload.feeds.length:0;return '<p><b>CH'+(IDs.indexOf(x.id)+1)+' · '+x.id+':</b> <span class="'+(x.ok?'ok':'error')+'">'+(x.ok?'Connected via '+x.method+' · '+count+' recent feed entries':esc(x.error))+'</span></p>'}
+async function refresh(){
+ if(refreshing)return;refreshing=true;
+ const state=$('state');state.textContent='Checking cloud channels...';state.className='pill';
+ try{
+  const channelResults=await Promise.all(IDs.map(loadChannel));
+  $('channelstatus').innerHTML=channelResults.map(presentChannelDiagnostic).join('');
+  const raw=channelResults.map(x=>x.ok?x.payload:null);
+  const knownRuns=[...new Set(raw.flatMap(runsIn))].sort().reverse();
+  const selector=$('runselect');
+  const previous=chosenRun;
+  selector.innerHTML='<option value="">Latest available</option>'+knownRuns.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join('');
+  if(previous&&knownRuns.includes(previous)){selector.value=previous}else{chosenRun='';selector.value=''}
+  const current=chosenRun||knownRuns[0]||'';
+  $('run').textContent='Run: '+(current||'No tagged run');
+  const p=sortedUniqueRows(getRunEntries(raw[0],current),'W');
+  const c=sortedUniqueRows(getRunEntries(raw[1],current),'W');
+  const n=sortedUniqueRows(getRunEntries(raw[2],current),'E');
+  const cm=new Map(c.map(x=>[x._window,x]));
+  const paired=p.filter(x=>cm.has(x._window)).map(x=>({window:x._window,p:x,c:cm.get(x._window)}));
+  graph('power',p,['field1','field2','field3'],'_window');
+  graph('voltage',p,['field4','field5','field6'],'_window');
+  graph('current',c,['field3','field4','field5'],'_window');
+  fillMap(p);
+  const last=p.at(-1);
+  $('kpa').textContent=last?fmt(last.field1)+' kW':'—';
+  $('kcount').textContent=p.length+' / '+n.length;
+  const lastTransfer=[...p].reverse().find(x=>Number(x.field7)>0);
+  $('khouse').textContent=lastTransfer?fmt(lastTransfer.field7,0):'—';
+  const res=n.map(x=>num(x.field4)).filter(Number.isFinite);
+  $('kres').textContent=res.length?(res.reduce((a,b)=>a+b,0)/res.length).toFixed(1)+' W':'—';
+  $('recent').innerHTML=p.slice(-5).map(x=>'<p><b>Window '+x._window+' / Map '+esc(x.field8)+'</b> · Phase A '+fmt(x.field1)+' kW · '+esc(x.status||'')+'</p>').join('')||'No phase measurements uploaded yet';
+  const rows=paired.map(({window:w,p:a,c:b})=>[w,fmt(b.field1,2),fmt(b.field2,2),fmt(a.field4),fmt(a.field5),fmt(a.field6),fmt(b.field3),fmt(b.field4),fmt(b.field5),fmt(a.field1,3),fmt(a.field2,3),fmt(a.field3,3),fmt(a.field7,0),fmt(a.field8,0)]);
+  $('measuretable').innerHTML=makeTable(['Window','Start s','End s','Va V','Vb V','Vc V','Ia A','Ib A','Ic A','Pa kW','Pb kW','Pc kW','House','Map'],rows);
+  $('coverage').textContent='Selected run: '+(current||'—')+' · Power/Voltage '+p.length+'/12 · Current/Time '+c.length+'/12 · Matched windows '+paired.length+'/12 · NILM '+n.length+'/8'+(paired.length<12?' · Partial upload or missing window(s); no cross-run mixing.':' · Complete measurements.');
+  $('nilmtable').innerHTML=makeTable(['Event','Time s','Measured W','Predicted W','Residual W','Device(s)','Score %','House','Type'],n.map(x=>[x._window,fmt(x.field1,2),fmt(x.field2,1),fmt(x.field3,1),fmt(x.field4,1),applianceName(Math.round(num(x.field5)||0)),fmt(x.field6,1),fmt(x.field7,0),num(x.field8)===2?'Multi':num(x.field8)===1?'ON':'OFF']));
+  const ok=channelResults.filter(x=>x.ok).length;
+  $('errors').textContent=ok+' of 3 public channel feeds accessible. Selected run '+(current||'—')+'. '+(location.protocol==='file:'?'Opened locally (file://); for a public one-link dashboard, publish as an HTTPS static site.':'');
+  $('stamp').textContent='Last refresh: '+new Date().toLocaleString();
+  state.textContent=ok===3?'Cloud feeds connected':ok>0?'Partial cloud data ('+ok+'/3)':'Cloud read failed (0/3)';
+  state.className='pill '+(ok===3?'ok':ok>0?'warn':'error');
+ }catch(e){state.textContent='Dashboard error';state.className='pill error';$('errors').textContent=e.message;console.error(e)}
+ finally{refreshing=false}
+}
+document.querySelectorAll('#tabs button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('show',s.dataset.tab===btn.dataset.show))}));$('refresh').onclick=refresh;$('runselect').addEventListener('change',e=>{chosenRun=e.target.value;refresh()});refresh();setInterval(refresh,30000);
+</script></body></html>
